@@ -34,9 +34,9 @@ theorem number_theory_95025:
 
   /- We'll need the values f(0) = 0 and g(0) = 0 -/
   have f_zero: f 0 = 0 := by
-    show ofDigits 2 (digits 3 0) = 0; rfl
+    show ofDigits 2 (digits 3 0) = 0; simp
   have g_zero: g 0 = 0 := by
-    show ofDigits 3 (digits 2 0) = 0; rfl
+    show ofDigits 3 (digits 2 0) = 0; simp
 
   /- Third claim: g is strictly monotonous.
     We'll show this by induction on n, hence the let rec -/
@@ -103,12 +103,13 @@ theorem number_theory_95025:
     rw [Set.infinite_iff_exists_gt]
     intro n
     use g (n + 1); apply And.intro;
-    exact g_mem_S (n+1)
-    linarith [StrictMono.id_le claim3 (n+1)]
+    exact g_mem_S (n + 1)
+    have : n + 1 ≤ g (n + 1) := StrictMono.id_le claim3 (n + 1)
+    linarith
 
   let rec claim5: (n: ℕ) → Nat.nth S n = g n
   | 0 => by rw [S_zero, g_zero]
-  | n+1 => by
+  | n + 1 => by
       apply eq_of_le_of_le
       have g_lt: g n < g (n+1) := claim3 (by linarith)
       rw [← (claim5 n)] at g_lt
@@ -132,4 +133,4 @@ theorem number_theory_95025:
   show Nat.nth S 100 = 981
   rw [claim5 100]
   show ofDigits 3 (digits 2 100) = 981
-  rfl
+  simp [ofDigits_cons]

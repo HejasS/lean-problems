@@ -2,11 +2,8 @@ import Mathlib
 open Real Polynomial Filter Topology LaurentPolynomial
 
 set_option maxHeartbeats 400000
-set_option pp.raw true
-set_option pp.raw.maxDepth 10
 
-
-noncomputable def Polynomial.eval₃ := Polynomial.eval₂ (@LaurentPolynomial.C ℝ (by infer_instance))
+noncomputable def Polynomial.eval₃ := Polynomial.eval₂ (@LaurentPolynomial.C ℝ _)
 
 /- Find all polynomials $P$ with real coefficients such that
 \[
@@ -19,12 +16,13 @@ theorem algebra_98595 :
     P.eval x / (y * z) + P.eval y / (z * x) + P.eval z / (x * y) =
     P.eval (x - y) + P.eval (y - z) + P.eval (z - x)) }
     = { P | ∃ c : ℝ, P = c • (X ^ 2 + 3) } := by
-  apply Set.ext
-  intro P
+  ext P
   constructor
   -- Assume P satisfies the property; then it is of the given form
-  · intro hP; simp at hP
-    -- We show firt that P is even
+  · intro hP
+    simp at hP
+    have h : 3 = 3 := by rfl
+    -- We show first that P is even
     have h₀ (x : ℝ) : P.eval x = P.eval (-x) := by
       -- We may assume WLOG that $x$ is not zero
       -- since if $x=0$, then $P(0) = P(-0)$
@@ -32,7 +30,7 @@ theorem algebra_98595 :
       · simp at hx; simp [hx]
       -- We may also assume WLOG that $x>0$, as otherwise
       -- we can replace $x$ by $-x$
-      wlog hx₁: x > 0
+      wlog hx₁: x > 0 generalizing x
       · have hx : x < 0 := by
           simp at hx₁
           match hx₁.eq_or_lt with
@@ -40,10 +38,7 @@ theorem algebra_98595 :
           | Or.inr hx₁ => exact hx₁
         apply Eq.symm
         nth_rw 2 [← neg_neg x]
-        apply this
-        · assumption
-        · linarith
-        · linarith
+        apply this <;> linarith 
       -- Now we define sequences $y_n$ and $z_n$ such that
       -- $2xyz = x + y + z$ for every $n$ and such that $z(n)$ converges to $0$
       -- and such that $y$ and $z$ are never $0$
@@ -135,6 +130,7 @@ theorem algebra_98595 :
       linarith
     -- Now we set $y = 1 / x$ and $z = x + 1 / x$. One check that these satisfy $2xyz = x + y + z$,
     -- from this and the evenness of $P$ we obtain the following equation:
+
     have h₁ (x) (hx: x ≠ 0) : (x + 1 / x) * (P.eval (x + 1 / x) - P.eval (x - 1/x)) = 1 / x * P.eval x + x * P.eval (1 / x) := by
       let y := 1 / x
       have hy : y ≠ 0 := by unfold y; simp [hx]
@@ -178,6 +174,7 @@ theorem algebra_98595 :
       change P.natDegree = n + 2 at hP₁
       -- We consider the coefficient of $T ^ (n + 1)$ in the equality h₂
       have h₃ : n + 1 = n + 1 := by linarith
+      have h : (3 : Nat) = 3 := by rfl
       apply_fun ((T (-1) * P.eval₃ (T 1) + T 1 * P.eval₃ (T (-1))) : ℝ[T;T⁻¹]) at h₃
       nth_rw 1 [← h₂] at h₃
       -- To calculate this, we expand the polynomial using the binomial theorem
@@ -216,6 +213,7 @@ theorem algebra_98595 :
       -- Here we need to manually rewrite the resulting term,
       -- using the bounds over which we sum to show that there
       -- only one or two cases in each sum which contribute to the $n+1$-th coefficient
+      clear h₁ h₂ h₃₁ h₃₂ h₃₃ h₃₄ h₃₅ h₃₆ h₃₇ h₃₇₀ hP
       conv at h₃ =>
         enter [1, 2, i, 2, j]
         congr; simp
@@ -232,11 +230,11 @@ theorem algebra_98595 :
           enter [2, 2, 2, 1]
           equals (↑i = n ∧ ↑j = n) ∨ (↑i = n + 2 ∧ ↑j = n + 1) =>
             have := Finset.mem_range.mp i.2; have := Finset.mem_range.mp j.2
-            rw [← iff_eq_eq]; simp; omega
+            rw [← iff_eq_eq]; simp only [Int.reduceNegSucc, mul_neg, mul_one, add_left_inj]; omega
           enter [2, 2, 2, 1]
           equals (↑i = n + 2 ∧ ↑j = n + 2) =>
             have := Finset.mem_range.mp i.2; have := Finset.mem_range.mp j.2
-            rw [← iff_eq_eq]; simp; omega
+            rw [← iff_eq_eq]; simp only [Int.reduceNegSucc, mul_neg, mul_one, add_left_inj]; omega
       -- We want to split up the cases even more
       have h₃₈ (i j : ℕ) (r : ℝ) :
           (if i = n ∧ j = n then r else 0) + (if i = n + 2 ∧ j = n + 1 then r else 0) =
@@ -283,6 +281,7 @@ theorem algebra_98595 :
       -- of a lean simp lemma which can simplify terms of the type
       -- ∑ x ∈ s, if x = a then r else 0
       -- (it is r if a is in s, else 0)
+      have : 3 = 3 := by rfl
       have h₃₉ (A B : Prop) [Decidable A] [Decidable B] (r : ℝ) :
           (if A ∧ B then r else 0) = if A then (if B then r else 0) else 0 := by
         by_cases hA : A <;> by_cases hB : B <;> simp [hA, hB]
@@ -331,13 +330,12 @@ theorem algebra_98595 :
       cases hn : n with
       -- In the case $0$ the equation shows that $3 \cdot P_2 = P_0$
       | zero =>
-        simp [hn] at h₃
-        have : P.coeff 2 * 3 = P.coeff 0 := by linarith
+        simp [hn, add_comm (P.coeff 2) _] at h₃
         -- We can choose $c = P_2$
         use (P.coeff 2)
         nth_rw 1 [P.as_sum_range, hP₁, hn]
-        simp [show Finset.range 3 = {0, 1, 2} by rfl, ← this]
-        rw [← smul_X_eq_monomial, ← smul_X_eq_monomial, ← Polynomial.smul_eq_C_mul]
+        simp [show Finset.range 3 = {0, 1, 2} by rfl]
+        rw [← smul_X_eq_monomial, ← smul_X_eq_monomial, ← h₃, Polynomial.C_mul, ← Polynomial.smul_eq_C_mul]
         show P.coeff 2 • 3 + (P.coeff 1 • X ^ 1 + P.coeff 2 • X ^ 2) = P.coeff 2 • X ^ 2 + P.coeff 2 • 3
         -- Thus it suffices to show that the linear coefficient $P_1$ is $0$
         suffices P.coeff 1 = 0 by rw [this]; simp; ring
@@ -362,11 +360,10 @@ theorem algebra_98595 :
             linarith
           contradiction
         -- The second case $5 + 2n = 0$ is impossible since $n$ is a natural number
-        | Or.inr hn => linarith
+        | Or.inr hn => by_contra!; linarith
   -- Now suppose that $P$ is of the form $P(x) = c * (x ^ 2 + 1)$
   · intro ⟨c, hP⟩ x y z _ _ _ hxyz
     rw [hP]
     field_simp
-    linear_combination
-      (-(1 * c * x ^ 3 * z * y) + c * x ^ 2 * z ^ 2 * y - 1 * c * x * z ^ 3 * y +
+    linear_combination (-(1 * c * x ^ 3 * z * y) + c * x ^ 2 * z ^ 2 * y - 1 * c * x * z ^ 3 * y +
         c * x ^ 2 * z * y ^ 2 + c * x * z ^ 2 * y ^ 2 - 1 * c * x * z * y ^ 3 - 3 * c * x * z * y) * hxyz

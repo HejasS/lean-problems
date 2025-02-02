@@ -1,3 +1,23 @@
--- This module serves as the root of the `Numina15` library.
--- Import modules here that should be built as part of the library.
 import Numina15.Basic
+import Numina15.algebra_93027
+import Numina15.algebra_94317
+import Numina15.algebra_95276
+import Numina15.algebra_96297
+import Numina15.algebra_96688
+import Numina15.algebra_96742
+import Numina15.algebra_97605
+import Numina15.algebra_97661
+import Numina15.algebra_98363
+import Numina15.algebra_98595
+import Numina15.inequalities_95511
+import Numina15.number_theory_45063
+import Numina15.number_theory_93086
+import Numina15.number_theory_93581
+import Numina15.number_theory_94105
+import Numina15.number_theory_95025
+import Numina15.number_theory_95147
+import Numina15.number_theory_95583
+import Numina15.number_theory_96636
+import Numina15.number_theory_97186
+import Numina15.number_theory_97382
+import Numina15.«algebra_95276 copy»

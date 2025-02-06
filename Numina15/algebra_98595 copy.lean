@@ -25,7 +25,7 @@ theorem algebra_98595 : { P : Polynomial ℝ |
   · intro hP
     simp at hP
     -- We show first that P is even
-    have h₀ (x : ℝ) : P.eval x = P.eval (-x) := by
+    have h₀ (x : ℝ) : P.eval x = P.eval (-x) := by sorry /-
       -- We may assume WLOG that $x$ is not zero
       -- since if $x=0$, then $P(0) = P(-0)$
       wlog hx: x ≠ 0
@@ -83,7 +83,7 @@ theorem algebra_98595 : { P : Polynomial ℝ |
       -- By showing that the $y$ and $z$ we chose indeed satisfy this equation, we can
       -- conclude that we always have
       -- \[
-      --   P(x) * x + P(y) * y + P(z) * z = x * y * z * (P(x-y) + P(y-z) + P(z-x))
+      -- P(x) * x + P(y) * y + P(z) * z = x * y * z * (P(x-y) + P(y-z) + P(z-x))
       -- \]
       -- from the assumption by multiplying with $xyz$
       have h₀₀ : (fun n => P.eval x * x + P.eval (y n) * (y n) + P.eval (z n) * (z n))=
@@ -129,10 +129,11 @@ theorem algebra_98595 : { P : Polynomial ℝ |
       have h₀₃ : x * (P.eval x - P.eval (-x)) = 0 := by linarith
       -- Since $x\neq 0$, it follows that $P(x) = P(-x)$ as claimed.
       simp [hx] at h₀₃
-      linarith
+      linarith -/
     -- Now we set $y = 1 / x$ and $z = x + 1 / x$. One check that these satisfy $2xyz = x + y + z$,
     -- from this and the evenness of $P$ we obtain the following equation:
-    have h₁ (x) (hx: x ≠ 0) : (x + 1 / x) * (P.eval (x + 1 / x) - P.eval (x - 1 / x)) = 1 / x * P.eval x + x * P.eval (1 / x) := by
+
+    have h₁ (x) (hx: x ≠ 0) : (x + 1 / x) * (P.eval (x + 1 / x) - P.eval (x - 1/x)) = 1 / x * P.eval x + x * P.eval (1 / x) := by
       let y := 1 / x
       have hy : y ≠ 0 := by unfold y; simp [hx]
       let z := x + 1 / x
@@ -147,23 +148,7 @@ theorem algebra_98595 : { P : Polynomial ℝ |
     -- Since this equation holds for all nonzero $x$, it holds as an equation of Laurent Polynomials
     -- Indeed, for this we only need the equation to hold for infinitely many $x$, but this  well known fact
     -- is not in Mathlib yet.
-    have h₂ : (T 1 + T (-1)) * (P.eval₃ (T 1 + T (-1))) - (T 1 + T (-1)) * (P.eval₃ (T 1 - T (-1))) = T (-1) * P.eval₃ (T 1) + T 1 * P.eval₃ (T (-1)) := by
-      apply eq_of_sub_eq_zero
-      obtain ⟨n, f, hf⟩  := exists_T_pow  ((T 1 + T (-1)) * (P.eval₃ (T 1 + T (-1))) - (T 1 + T (-1)) * (P.eval₃ (T 1 - T (-1))) - ( T (-1) * P.eval₃ (T 1) + T 1 * P.eval₃ (T (-1))))
-      apply_fun (· * (T n))
-      simp only [Int.reduceNeg, zero_mul]
-      rw [← hf, toLaurent_eq_zero]
-      apply eq_of_infinite_eval_eq
-      simp
-      suffices h₂₀ : Set.Ioo 0 1 ⊆ {x | f.eval (x : ℝ) = 0} by
-        apply Set.Infinite.mono h₂₀
-        simp [Set.Ioo_infinite]
-      intro x hx
-      rw [Set.mem_setOf_eq]
-      sorry
-      apply IsUnit.mul_left_injective
-      apply isUnit_T
-      -- have h₂₁ (x : ℝˣ): f.eval (x : ℝ) = f.toLaurent.eval x
+    have h₂ : (T 1 + T (-1)) * (P.eval₃ (T 1 + T (-1))) - (T 1 + T (-1)) * (P.eval₃ (T 1 - T (-1))) = T (-1) * P.eval₃ (T 1) + T 1 * P.eval₃ (T (-1)) := by sorry
     -- Now we differntiate on the degree of $P$
     match hP₁ : P.natDegree with
     -- If it is constant, then our equation yields that it is in fact zero, so $c = 0$ works.
@@ -193,11 +178,16 @@ theorem algebra_98595 : { P : Polynomial ℝ |
       have h₃ : n + 1 = n + 1 := by linarith
       apply_fun ((T (-1) * P.eval₃ (T 1) + T 1 * P.eval₃ (T (-1))) : ℝ[T;T⁻¹]) at h₃
       nth_rw 1 [← h₂] at h₃
+      -- To calculate this, we expand the polynomial using the binomial theorem
+      unfold eval₃ at h₃; simp [Finsupp.add_apply] at h₃
+      simp only [eval₂_eq_sum_range, add_pow, sub_pow, Finset.mul_sum, Finset.sum_mul, ← Finset.sum_sub_distrib, hP₁] at h₃
+      simp only [add_mul, T_pow, ← T_add ] at h₃
+      -- We need to show a couple of theorems about Laurent Polynomials because they don't have a
+      -- good API in Mathlib yet
       have h₃₁ (Q : ℕ → ℝ[T;T⁻¹]) (k : ℕ): (∑ i ∈ Finset.range (k), (Q i)) (n+1) = (∑ i ∈ Finset.range (k), (Q i (n+1))) := by
         apply Finset.sum_apply'
       have h₃₂ (Q R : ℝ[T;T⁻¹]) : (Q + R) (n+1) = Q (n+1) + R (n+1) := by rfl
       have h₃₃ (Q R : ℝ[T;T⁻¹]) : (Q - R) (n+1) = Q (n+1) - R (n+1) := by rfl
-      have h₃₆ (R : ℝ[T;T⁻¹]) (r : ℝ) : LaurentPolynomial.C r * R = r • R := by sorry
       have h₃₄ (r : ℝ) (R : ℝ[T;T⁻¹]) : (r • R) (n+1) = r * (R (n+1)) := by rfl
       have h₃₅ (r : ℕ) (R : ℝ[T;T⁻¹]) : ((↑r : ℝ[T;T⁻¹]) * R) (n+1) = r * (R (n+1)) := by
         induction' r with r ih
@@ -205,8 +195,9 @@ theorem algebra_98595 : { P : Polynomial ℝ |
         · push_cast
           rw [add_mul, add_mul, ← ih]
           simp; rfl
+      have h₃₆ (R : ℝ[T;T⁻¹]) (r : ℝ) : LaurentPolynomial.C r * R = r • R := by sorry
       have h₃₇₀ (R : ℝ[T;T⁻¹])  : (-R) (n+1) = - (R (n+1)) := by rfl
-      have h₃₇ (r : ℤ) (R : ℝ[T;T⁻¹]) : ((r : ℝ[T;T⁻¹]) * R) ((↑n+1) ) = r * (R (n+1)) := by
+      have h₃₇ (r : ℤ) (R : ℝ[T;T⁻¹]) : ((r : ℝ[T;T⁻¹]) * R) (↑(n+1) : ℤ) = r * (R (n+1)) := by
         wlog hr : r ≥ 0 generalizing r
         · have hr' : -r ≥ 0 := by linarith
           have := this (-r) hr'; simp [h₃₇₀] at this
@@ -214,40 +205,79 @@ theorem algebra_98595 : { P : Polynomial ℝ |
         · lift r to ℕ using hr
           norm_cast
           exact h₃₅ r R
-      have h₃₈ (n : ℕ): (-1 : ℝ[T;T⁻¹]) ^ n = (↑((-1 : ℤ) ^ n) : ℝ[T;T⁻¹]) := by sorry
-      have h₃₉ (n : ℕ) : (n : ℝ[T;T⁻¹]) = LaurentPolynomial.C (n : ℝ) := rfl
-      -- To calculate this, we expand the polynomial using the binomial theorem
-      push_cast at h₃
-      rw [h₃₂, h₃₃] at h₃
-      unfold eval₃ at h₃; simp [Finsupp.add_apply] at h₃
-      simp only [eval₂_eq_sum_range, add_pow, sub_pow, Finset.mul_sum, Finset.sum_mul, hP₁, add_mul, T_pow] at h₃
-      simp_rw [← mul_assoc, ← T_mul, ← mul_assoc, ← T_add, mul_assoc, T_mul,
-        h₃₁, h₃₂, h₃₉, ← mul_assoc, mul_comm _ ((-1 : ℝ[T;T⁻¹]) ^ _), mul_assoc, h₃₆, h₃₈, h₃₇,
-        h₃₄, T_apply] at h₃
-      -- We need to show a couple of theorems about Laurent Polynomials because they don't have a
-      -- good API in Mathlib yet
       -- Here we collect the powers of T inside of the double sums
+      simp_rw [← mul_assoc, ← T_mul, ← mul_assoc, ← T_add, mul_assoc, T_mul, h₃₂, h₃₁, h₃₃, h₃₂, h₃₆, Algebra.smul_mul_assoc, h₃₄, h₃₅, mul_assoc] at h₃
+      norm_cast at h₃
+      simp_rw [h₃₇, h₃₅] at h₃
       -- We need to rewrite using Finset.sum_attach so that we have access to the bounds of the variables inside the sums
-      simp at h₃
-      simp_rw [Finset.sum_add_distrib, ← Finset.sum_attach (Finset.range _)] at h₃
-      have h₃₁₀ (i : { x // x ∈ Finset.range (n + 2 + 1) }) (j : { x // x ∈ Finset.range (i + 1) }) :
-          (- (↑((i : ℕ) - (j : ℕ)) : ℤ) + j = n) ↔ (↑i = n ∧ j = n) ∨ (↑i = n + 2 ∧ j = n + 1) := by
-        have := Finset.mem_range.mp i.2; have := Finset.mem_range.mp j.2
-        omega
-      have h₃₁₁ (i : { x // x ∈ Finset.range (n + 2 + 1) }) (j : { x // x ∈ Finset.range (i + 1) }) :
-          (-(↑((i : ℕ) - (j : ℕ)) : ℤ) + j + -1 = ↑n + 1) ↔ (i = n + 2 ∧ j = n + 2) := by
-        have := Finset.mem_range.mp i.2; have := Finset.mem_range.mp j.2
-        omega
-      simp_rw [h₃₁₀, h₃₁₁] at h₃
+      simp_rw [← Finset.sum_attach (Finset.range _), T_apply] at h₃
+      -- Here we need to manually rewrite the resulting term,
+      -- using the bounds over which we sum to show that there
+      -- only one or two cases in each sum which contribute to the $n+1$-th coefficient
+      clear h₁ h₂ h₃₁ h₃₂ h₃₃ h₃₄ h₃₅ h₃₆ h₃₇ h₃₇₀ hP
+      conv at h₃ =>
+        enter [1, 2, i, 2, j]
+        congr; simp
+        · congr
+          enter [1]
+          equals (↑i = n ∧ ↑j = n) ∨ (↑i = n + 2 ∧ ↑j = n + 1) =>
+            have := Finset.mem_range.mp i.2; have := Finset.mem_range.mp j.2
+            rw [← iff_eq_eq]; omega
+          enter [1]
+          equals (↑i = n + 2 ∧ ↑j = n + 2) =>
+            have := Finset.mem_range.mp i.2; have := Finset.mem_range.mp j.2
+            rw [← iff_eq_eq]; omega
+        · congr
+          enter [2, 2, 2, 1]
+          equals (↑i = n ∧ ↑j = n) ∨ (↑i = n + 2 ∧ ↑j = n + 1) =>
+            have := Finset.mem_range.mp i.2; have := Finset.mem_range.mp j.2
+            rw [← iff_eq_eq]; simp only [Int.reduceNegSucc, mul_neg, mul_one, add_left_inj]; omega
+          enter [2, 2, 2, 1]
+          equals (↑i = n + 2 ∧ ↑j = n + 2) =>
+            have := Finset.mem_range.mp i.2; have := Finset.mem_range.mp j.2
+            rw [← iff_eq_eq]; simp only [Int.reduceNegSucc, mul_neg, mul_one, add_left_inj]; omega
       -- We want to split up the cases even more
       have h₃₈ (i j : ℕ) (r : ℝ) :
           (if i = n ∧ j = n then r else 0) + (if i = n + 2 ∧ j = n + 1 then r else 0) =
           if ((i = n ∧ j = n) ∨ (i = n + 2 ∧ j = n + 1)) then r else 0 := by
         split <;> simp [*]
-      simp_rw [← h₃₈, Finset.sum_add_distrib] at h₃
+      simp_rw [← h₃₈, Finset.sum_sub_distrib, mul_add, Finset.sum_add_distrib] at h₃
+      simp at h₃
       -- Now we need to manually undo our earlier
       --   rw [Finset.sum_attach]
       -- as lean could not do this automatically
+      conv at h₃ =>
+        enter [1, 1, 1, 1, 2, i]
+        equals ∑ x ∈ (Finset.range (i + 1)), if i = n ∧ x = n then P.coeff i * ((i : ℕ).choose x) else 0 =>
+          rw [← Finset.sum_attach (Finset.range _)]
+      conv at h₃ =>
+        enter [1, 1, 1, 2, 2, i]
+        equals ∑ x ∈ (Finset.range (i + 1)), if i = n + 2 ∧ x = n + 1 then P.coeff i * ((i : ℕ).choose x) else 0 =>
+          rw [← Finset.sum_attach (Finset.range _)]
+      conv at h₃ =>
+        enter [1, 1, 2, 2, i]
+        equals ∑ x ∈ (Finset.range (i + 1)), if i = n + 2 ∧ x = n + 2 then P.coeff i * ((i : ℕ).choose x) else 0 =>
+          rw [← Finset.sum_attach (Finset.range _)]
+      conv at h₃ =>
+        enter [1, 2, 1, 1, 2, i]
+        equals ∑ x ∈ (Finset.range (i + 1)), if i = n ∧ x = n then P.coeff i * ((-1) ^ (x + i) * ((i : ℕ).choose x)) else 0 =>
+          rw [← Finset.sum_attach (Finset.range _)]
+      conv at h₃ =>
+        enter [1, 2, 1, 2, 2, i]
+        equals ∑ x ∈ (Finset.range (i + 1)), if i = n + 2 ∧ x = n + 1 then P.coeff i * ((-1) ^ (x + i) * ((i : ℕ).choose x)) else 0 =>
+          rw [← Finset.sum_attach (Finset.range _)]
+      conv at h₃ =>
+        enter [1, 2, 2, 2, i]
+        equals ∑ x ∈ (Finset.range (i + 1)), if i = n + 2 ∧ x = n + 2 then P.coeff i * ((-1) ^ (x + i) * ((i : ℕ).choose x)) else 0 =>
+          rw [← Finset.sum_attach (Finset.range _)]
+      conv at h₃ =>
+        enter [2, 1]
+        equals ∑ x ∈ (Finset.range (n + 2 + 1)), (if (-1 : ℤ) + (x : ℕ) = n + 1 then P.coeff x else 0) =>
+          rw [← Finset.sum_attach (Finset.range _)]
+      conv at h₃ =>
+        enter [2, 2]
+        equals ∑ x ∈ (Finset.range (n + 2 + 1)), (if 1 + - (x : ℤ) = n + 1 then P.coeff x else 0) =>
+          rw [← Finset.sum_attach (Finset.range _)]
       -- We want to rewrite the conditions on the two indices like this in order to make use
       -- of a lean simp lemma which can simplify terms of the type
       -- ∑ x ∈ s, if x = a then r else 0
@@ -257,23 +287,37 @@ theorem algebra_98595 : { P : Polynomial ℝ |
         by_cases hA : A <;> by_cases hB : B <;> simp [hA, hB]
       simp_rw [h₃₉] at h₃
       simp at h₃
-      have h₃₁₂ (k l : ℕ) (hk : k ≤ l) (i : { x // x ∈ Finset.range (l + 1) }) : i = k ↔ i = ⟨k, show k ∈ Finset.range (l + 1) by simp; linarith⟩ := by
-        apply Iff.intro
-        · intro h; simp [← h]
-        · intro h; simp [h]
-      have h₃₁₃ (a b : ℕ) : -1 + (a : ℤ) = (b : ℤ) + 1 ↔ a = b + 2 := by omega
-      have h₃₁₄ (a b : ℕ) : 1 + -(a : ℤ) = (b : ℤ) + 1 ↔ a = 0 ∧ b = 0 := by omega
-      simp_rw [h₃₁₂ n (n + 2) (by linarith), h₃₁₂ (n + 2) (n + 2) (by linarith)] at h₃
-      simp at h₃
-      simp_rw [
-        h₃₁₄, h₃₉, h₃₁₃,
-        h₃₁₂ 0 (n + 2) (by linarith),
-        h₃₁₂ n n (by linarith),
-        h₃₁₂ (n+2) (n+2) (by linarith),
-        h₃₁₂ (n+1) (n+2) (by linarith),
-      ] at h₃
-      simp at h₃
-
+      -- Unfortunately we need to undo even more .attach-rewrites
+      conv at h₃ =>
+        enter [1, 1, 1, 1]
+        equals ∑ x ∈ (Finset.range (n + 2 + 1)), if x = n then if n < x + 1 then P.coeff x * ((x).choose n) else 0 else 0 =>
+          rw [← Finset.sum_attach (Finset.range _)]
+      conv at h₃ =>
+        enter [1, 1, 1, 2]
+        equals ∑ x ∈ (Finset.range (n + 2 + 1)), if x = n + 2 then if n < x then P.coeff x * ((x).choose (n + 1)) else 0 else 0 =>
+          rw [← Finset.sum_attach (Finset.range _)]
+      conv at h₃ =>
+        enter [1, 1, 2]
+        equals ∑ x ∈ (Finset.range (n + 2 + 1)), if x = n + 2 then if n + 2 < x + 1 then P.coeff x * ((x).choose (n + 2)) else 0 else 0 =>
+          rw [← Finset.sum_attach (Finset.range _)]
+      conv at h₃ =>
+        enter [1, 2, 1, 1]
+        equals ∑ x ∈ (Finset.range (n + 2 + 1)), if x = n then if n < x + 1 then P.coeff x * ((-1) ^ (n + x) * ((x).choose (n))) else 0 else 0 =>
+          rw [← Finset.sum_attach (Finset.range _)]
+      conv at h₃ =>
+        enter [1, 2, 1, 2]
+        equals ∑ x ∈ (Finset.range (n + 2 + 1)), if x = n + 2 then if n < x then P.coeff x * ((-1) ^ (n + 1 + x) * ((x).choose (n + 1))) else 0 else 0 =>
+          rw [← Finset.sum_attach (Finset.range _)]
+      conv at h₃ =>
+        enter [1, 2, 2]
+        equals ∑ x ∈ (Finset.range (n + 2 + 1)), if x = n + 2 then if n + 2 < x + 1 then P.coeff x * ((-1) ^ (n + 2 + x) * ((x).choose (n + 2))) else 0 else 0 =>
+          rw [← Finset.sum_attach (Finset.range _)]
+      conv at h₃ =>
+        enter [2, 1, 2, x, 1]
+        equals x = n + 2 => ext; apply Iff.intro <;> intro <;> linarith
+      conv at h₃ =>
+        enter [2, 2, 2, x, 1]
+        equals x = 0 ∧ n = 0 => ext; omega
       -- After doing this, we can finally simplify down the expression and obtain the equation
       -- []
       --
@@ -282,7 +326,7 @@ theorem algebra_98595 : { P : Polynomial ℝ |
       ring_nf at h₃
       rw [mul_comm n 2, pow_mul] at h₃
       simp at h₃
-      have h₃ : (P.coeff (2 + n) * 3 + 2 * n * P.coeff (2 + n)) = if n = 0 then P.coeff 0 else 0 := by linarith
+      have h₃ : (P.coeff (n + 2) * 3 + 2 * n * P.coeff (n + 2)) = if n = 0 then P.coeff 0 else 0 := by sorry
       -- To work with this we must again distinguish cases whether $n=0$ or not
       cases hn : n with
       -- In the case $0$ the equation shows that $3 \cdot P_2 = P_0$
@@ -304,8 +348,8 @@ theorem algebra_98595 : { P : Polynomial ℝ |
       | succ n =>
       -- In the $n+1$ case the equation becomes $P_{n + 3} \cdot (5 + 2n) = 0$, so one of the factors must be zero
         simp [hn] at h₃
-        have h₃ : P.coeff (3 + n) * (5 + 2 * n) = 0 := by
-          linear_combination (norm := ring_nf) h₃
+        have h₃ : P.coeff (3 + n) * (5 + 2 * n) = 0 := by linarith
+          -- linear_combination (norm := ring_nf) h₃
         simp at h₃; match h₃ with
         | Or.inl hn =>
         -- The first case is impossible because the leading coefficient cannot be zero

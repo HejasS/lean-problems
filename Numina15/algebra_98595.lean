@@ -1,18 +1,16 @@
 import Mathlib
-open Real Polynomial Filter Topology LaurentPolynomial
+open Polynomial hiding C
+open Real Filter Topology LaurentPolynomial
 
-set_option maxHeartbeats 1000000
-set_option synthInstance.maxHeartbeats 0
-set_option maxSynthPendingDepth 10
-set_option variable?.maxSteps 50
-set_option maxRecDepth 2048
-set_option synthInstance.maxSize 1000
--- set_option trace.Elab.step true
+set_option maxHeartbeats 400000
+
+section algebra_98595
 noncomputable def Polynomial.eval₃ := Polynomial.eval₂ (@LaurentPolynomial.C ℝ _)
+end algebra_98595
 
 /- Find all polynomials $P$ with real coefficients such that
 \[
-\frac{P(x)}{yz} + \frac{P(y)}{zx} + \frac{P(z)}{xy} = P(x-y) + P(y-z) + P(z-x)
+  \frac{P(x)}{yz} + \frac{P(y)}{zx} + \frac{P(z)}{xy} = P(x-y) + P(y-z) + P(z-x)
 \]
 holds for all nonzero real numbers $x, y, z$ satisfying $2xyz=x+y+z$. -/
 theorem algebra_98595 : { P : Polynomial ℝ |
@@ -92,7 +90,7 @@ theorem algebra_98595 : { P : Polynomial ℝ |
         have := hP x (y n) (z n) hx (hy n) (hz n) (by
           unfold y z
           have : (n : ℝ) + 2 ≠ 0 := by linarith
-          have : (2 * n * x^2 + 2 * x^2 + n + 2) ≠ 0 := by nlinarith
+          have : (2 * n * x ^ 2 + 2 * x ^ 2 + n + 2) ≠ 0 := by nlinarith
           field_simp
           ring)
         linear_combination (norm := field_simp [hx, hy n, hz n]) x * (y n) * (z n) * this
@@ -130,7 +128,7 @@ theorem algebra_98595 : { P : Polynomial ℝ |
       -- Since $x\neq 0$, it follows that $P(x) = P(-x)$ as claimed.
       simp [hx] at h₀₃
       linarith
-    -- Now we set $y = 1 / x$ and $z = x + 1 / x$. One check that these satisfy $2xyz = x + y + z$,
+    -- Now we set $y = 1 / x$ and $z = x + 1 / x$. One checks that these satisfy $2xyz = x + y + z$,
     -- from this and the evenness of $P$ we obtain the following equation:
     have h₁ (x) (hx: x ≠ 0) : (x + 1 / x) * (P.eval (x + 1 / x) - P.eval (x - 1 / x)) = 1 / x * P.eval x + x * P.eval (1 / x) := by
       let y := 1 / x
@@ -142,6 +140,7 @@ theorem algebra_98595 : { P : Polynomial ℝ |
       have : x * x + 1 ≠ 0 := by nlinarith
       have := hP x y z hx hy hz (by unfold y z; field_simp; ring)
       unfold y z at this
+      -- (By multiplying the orgiginal equation by xyz = z$)
       linear_combination (norm := ring_nf) (x + 1/x) * this
       field_simp; rw [← h₀]; ring
     -- Since this equation holds for all nonzero $x$, it holds as an equation of Laurent Polynomials
@@ -163,10 +162,9 @@ theorem algebra_98595 : { P : Polynomial ℝ |
       sorry
       apply IsUnit.mul_left_injective
       apply isUnit_T
-      -- have h₂₁ (x : ℝˣ): f.eval (x : ℝ) = f.toLaurent.eval x
-    -- Now we differntiate on the degree of $P$
+    -- Now we differentiate on the degree of $P$
     match hP₁ : P.natDegree with
-    -- If it is constant, then our equation yields that it is in fact zero, so $c = 0$ works.
+    -- If $P$ is constant, then our equation yields that it is in fact zero, so $c = 0$ works.
     | 0 =>
       rw [← eq_C_coeff_zero_iff_natDegree_eq_zero] at hP₁
       have := hP 1 1 2 (by simp) (by simp) (by simp) (by linarith)
@@ -186,50 +184,52 @@ theorem algebra_98595 : { P : Polynomial ℝ |
       rw [degree_eq_iff_natDegree_eq, hP₁]
       apply @ne_zero_of_natDegree_gt _ _ _ 0
       linarith
-    -- So from now on we will write the degree as $n+2$ for a natural number $n$
+    -- So from now on we will write the degree as $n + 2$ for a natural number $n$
     | n + 2 =>
       change P.natDegree = n + 2 at hP₁
       -- We consider the coefficient of $T ^ (n + 1)$ in the equality h₂
       have h₃ : n + 1 = n + 1 := by linarith
       apply_fun ((T (-1) * P.eval₃ (T 1) + T 1 * P.eval₃ (T (-1))) : ℝ[T;T⁻¹]) at h₃
       nth_rw 1 [← h₂] at h₃
-      have h₃₁ (Q : ℕ → ℝ[T;T⁻¹]) (k : ℕ): (∑ i ∈ Finset.range (k), (Q i)) (n+1) = (∑ i ∈ Finset.range (k), (Q i (n+1))) := by
+      -- We need to show a couple of theorems about Laurent Polynomials because they don't have a
+      -- good API in Mathlib yet
+      have h₃₁ (Q : ℕ → ℝ[T;T⁻¹]) (k : ℕ): (∑ i ∈ Finset.range (k), (Q i)) (n + 1) = (∑ i ∈ Finset.range (k), (Q i (n + 1))) := by
         apply Finset.sum_apply'
-      have h₃₂ (Q R : ℝ[T;T⁻¹]) : (Q + R) (n+1) = Q (n+1) + R (n+1) := by rfl
-      have h₃₃ (Q R : ℝ[T;T⁻¹]) : (Q - R) (n+1) = Q (n+1) - R (n+1) := by rfl
-      have h₃₆ (R : ℝ[T;T⁻¹]) (r : ℝ) : LaurentPolynomial.C r * R = r • R := by sorry
-      have h₃₄ (r : ℝ) (R : ℝ[T;T⁻¹]) : (r • R) (n+1) = r * (R (n+1)) := by rfl
-      have h₃₅ (r : ℕ) (R : ℝ[T;T⁻¹]) : ((↑r : ℝ[T;T⁻¹]) * R) (n+1) = r * (R (n+1)) := by
+      have h₃₂ (Q R : ℝ[T;T⁻¹]) : (Q + R) (n + 1) = Q (n + 1) + R (n + 1) := rfl
+      have h₃₃ (Q R : ℝ[T;T⁻¹]) : (Q - R) (n + 1) = Q (n + 1) - R (n + 1) := rfl
+      have h₃₄ (r : ℝ) (R : ℝ[T;T⁻¹]) : (r • R) (n + 1) = r * (R (n + 1)) := rfl
+      have h₃₅ (R : ℝ[T;T⁻¹]) (r : ℝ) : C r * R = r • R := by sorry
+      have h₃₆ (r : ℕ) (R : ℝ[T;T⁻¹]) : ((↑r : ℝ[T;T⁻¹]) * R) (n + 1) = r * (R (n + 1)) := by
         induction' r with r ih
         · simp
         · push_cast
           rw [add_mul, add_mul, ← ih]
           simp; rfl
-      have h₃₇₀ (R : ℝ[T;T⁻¹])  : (-R) (n+1) = - (R (n+1)) := by rfl
-      have h₃₇ (r : ℤ) (R : ℝ[T;T⁻¹]) : ((r : ℝ[T;T⁻¹]) * R) ((↑n+1) ) = r * (R (n+1)) := by
+      have h₃₇ (R : ℝ[T;T⁻¹])  : (-R) (n + 1) = - (R (n + 1)) := rfl
+      have h₃₇ (r : ℤ) (R : ℝ[T;T⁻¹]) : ((r : ℝ[T;T⁻¹]) * R) ((↑n + 1) ) = r * (R (n + 1)) := by
         wlog hr : r ≥ 0 generalizing r
         · have hr' : -r ≥ 0 := by linarith
-          have := this (-r) hr'; simp [h₃₇₀] at this
+          have := this (-r) hr'; simp [h₃₇] at this
           assumption
         · lift r to ℕ using hr
           norm_cast
-          exact h₃₅ r R
+          exact h₃₆ r R
       have h₃₈ (n : ℕ): (-1 : ℝ[T;T⁻¹]) ^ n = (↑((-1 : ℤ) ^ n) : ℝ[T;T⁻¹]) := by sorry
-      have h₃₉ (n : ℕ) : (n : ℝ[T;T⁻¹]) = LaurentPolynomial.C (n : ℝ) := rfl
-      -- To calculate this, we expand the polynomial using the binomial theorem
+      have h₃₉ (n : ℕ) : (n : ℝ[T;T⁻¹]) = C (n : ℝ) := rfl
+      -- To calculate this, we expand the polynomial using the binomial theorem and pull everything inside the sums
       push_cast at h₃
       rw [h₃₂, h₃₃] at h₃
       unfold eval₃ at h₃; simp [Finsupp.add_apply] at h₃
       simp only [eval₂_eq_sum_range, add_pow, sub_pow, Finset.mul_sum, Finset.sum_mul, hP₁, add_mul, T_pow] at h₃
+      -- Then we move all $T^n$ terms to the right, as well as the application to (n + 1) inwards, until
+      -- we can simplify with T n m = 1 if n = m else 0
       simp_rw [← mul_assoc, ← T_mul, ← mul_assoc, ← T_add, mul_assoc, T_mul,
-        h₃₁, h₃₂, h₃₉, ← mul_assoc, mul_comm _ ((-1 : ℝ[T;T⁻¹]) ^ _), mul_assoc, h₃₆, h₃₈, h₃₇,
+        h₃₁, h₃₂, h₃₉, ← mul_assoc, mul_comm _ ((-1 : ℝ[T;T⁻¹]) ^ _), mul_assoc, h₃₅, h₃₈, h₃₇,
         h₃₄, T_apply] at h₃
-      -- We need to show a couple of theorems about Laurent Polynomials because they don't have a
-      -- good API in Mathlib yet
-      -- Here we collect the powers of T inside of the double sums
       -- We need to rewrite using Finset.sum_attach so that we have access to the bounds of the variables inside the sums
       simp at h₃
       simp_rw [Finset.sum_add_distrib, ← Finset.sum_attach (Finset.range _)] at h₃
+      -- The following two terms appear in the sum and should be simplified
       have h₃₁₀ (i : { x // x ∈ Finset.range (n + 2 + 1) }) (j : { x // x ∈ Finset.range (i + 1) }) :
           (- (↑((i : ℕ) - (j : ℕ)) : ℤ) + j = n) ↔ (↑i = n ∧ j = n) ∨ (↑i = n + 2 ∧ j = n + 1) := by
         have := Finset.mem_range.mp i.2; have := Finset.mem_range.mp j.2
@@ -245,45 +245,40 @@ theorem algebra_98595 : { P : Polynomial ℝ |
           if ((i = n ∧ j = n) ∨ (i = n + 2 ∧ j = n + 1)) then r else 0 := by
         split <;> simp [*]
       simp_rw [← h₃₈, Finset.sum_add_distrib] at h₃
-      -- Now we need to manually undo our earlier
-      --   rw [Finset.sum_attach]
-      -- as lean could not do this automatically
-      -- We want to rewrite the conditions on the two indices like this in order to make use
+      -- We want to rewrite the conditions on the two indices in order to make use
       -- of a lean simp lemma which can simplify terms of the type
       -- ∑ x ∈ s, if x = a then r else 0
       -- (it is r if a is in s, else 0)
-      have h₃₉ (A B : Prop) [Decidable A] [Decidable B] (r : ℝ) :
+      have h₃₁₂ (A B : Prop) [Decidable A] [Decidable B] (r : ℝ) :
           (if A ∧ B then r else 0) = if A then (if B then r else 0) else 0 := by
         by_cases hA : A <;> by_cases hB : B <;> simp [hA, hB]
-      simp_rw [h₃₉] at h₃
+      simp_rw [h₃₁₂] at h₃
       simp at h₃
-      have h₃₁₂ (k l : ℕ) (hk : k ≤ l) (i : { x // x ∈ Finset.range (l + 1) }) : i = k ↔ i = ⟨k, show k ∈ Finset.range (l + 1) by simp; linarith⟩ := by
+      -- We also need to rewrite the following since the i on the lhs is casted, so the simp lemma doesn't apply
+      have h₃₁₃ (k l : ℕ) (hk : k ≤ l) (i : { x // x ∈ Finset.range (l + 1) }) : i = k ↔ i = ⟨k, show k ∈ Finset.range (l + 1) by simp; linarith⟩ := by
         apply Iff.intro
         · intro h; simp [← h]
         · intro h; simp [h]
-      have h₃₁₃ (a b : ℕ) : -1 + (a : ℤ) = (b : ℤ) + 1 ↔ a = b + 2 := by omega
-      have h₃₁₄ (a b : ℕ) : 1 + -(a : ℤ) = (b : ℤ) + 1 ↔ a = 0 ∧ b = 0 := by omega
-      simp_rw [h₃₁₂ n (n + 2) (by linarith), h₃₁₂ (n + 2) (n + 2) (by linarith)] at h₃
+      -- These two are also for the simp lemma
+      have h₃₁₄ (a b : ℕ) : -1 + (a : ℤ) = (b : ℤ) + 1 ↔ a = b + 2 := by omega
+      have h₃₁₅ (a b : ℕ) : 1 + -(a : ℤ) = (b : ℤ) + 1 ↔ a = 0 ∧ b = 0 := by omega
+      simp_rw [h₃₁₃ n (n + 2) (by linarith), h₃₁₃ (n + 2) (n + 2) (by linarith)] at h₃
       simp at h₃
       simp_rw [
-        h₃₁₄, h₃₉, h₃₁₃,
-        h₃₁₂ 0 (n + 2) (by linarith),
-        h₃₁₂ n n (by linarith),
-        h₃₁₂ (n+2) (n+2) (by linarith),
-        h₃₁₂ (n+1) (n+2) (by linarith),
+        h₃₁₅, h₃₁₂, h₃₁₄,
+        h₃₁₃ 0 (n + 2) (by linarith),
+        h₃₁₃ n n (by linarith),
+        h₃₁₃ (n + 2) (n + 2) (by linarith),
+        h₃₁₃ (n + 1) (n + 2) (by linarith),
       ] at h₃
-      simp at h₃
 
-      -- After doing this, we can finally simplify down the expression and obtain the equation
-      -- []
-      --
-      -- \]
+      -- After doing this, we can finally simplify down the expression and obtain the equation below
       simp_arith at h₃
       ring_nf at h₃
       rw [mul_comm n 2, pow_mul] at h₃
       simp at h₃
       have h₃ : (P.coeff (2 + n) * 3 + 2 * n * P.coeff (2 + n)) = if n = 0 then P.coeff 0 else 0 := by linarith
-      -- To work with this we must again distinguish cases whether $n=0$ or not
+      -- To work with this we must again distinguish cases whether $n = 0$ or not
       cases hn : n with
       -- In the case $0$ the equation shows that $3 \cdot P_2 = P_0$
       | zero =>
@@ -296,13 +291,13 @@ theorem algebra_98595 : { P : Polynomial ℝ |
         show P.coeff 2 • 3 + (P.coeff 1 • X ^ 1 + P.coeff 2 • X ^ 2) = P.coeff 2 • X ^ 2 + P.coeff 2 • 3
         -- Thus it suffices to show that the linear coefficient $P_1$ is $0$
         suffices P.coeff 1 = 0 by rw [this]; simp; ring
-        -- But this is easily seen from evenness, e.g. by pluggin in $1$
+        -- But this is easily seen from evenness, e.g. by plugging in $1$
         have := h₀ 1
         rw [P.as_sum_range, hP₁, hn] at this
         simp [show Finset.range 3 = {0, 1, 2} by rfl] at this
         linarith
       | succ n =>
-      -- In the $n+1$ case the equation becomes $P_{n + 3} \cdot (5 + 2n) = 0$, so one of the factors must be zero
+      -- In the $n + 1$ case the equation becomes $P_{n + 3} \cdot (5 + 2n) = 0$, so one of the factors must be zero
         simp [hn] at h₃
         have h₃ : P.coeff (3 + n) * (5 + 2 * n) = 0 := by
           linear_combination (norm := ring_nf) h₃
@@ -321,6 +316,7 @@ theorem algebra_98595 : { P : Polynomial ℝ |
   -- Now suppose that $P$ is of the form $P(x) = c * (x ^ 2 + 1)$
   · intro ⟨c, hP⟩ x y z _ _ _ hxyz
     rw [hP]
+    -- Then the desired equation, after clearing denominators, is a multiple of hxyz
     field_simp
     linear_combination (-(1 * c * x ^ 3 * z * y) + c * x ^ 2 * z ^ 2 * y - 1 * c * x * z ^ 3 * y +
         c * x ^ 2 * z * y ^ 2 + c * x * z ^ 2 * y ^ 2 - 1 * c * x * z * y ^ 3 - 3 * c * x * z * y) * hxyz

@@ -100,7 +100,7 @@ theorem algebra_97007 {f g h i : ℝ → ℝ}
     · have hx1 : h x = i x := by linarith
       simp [hh, hi] at hx1
       rw [← log_div_log, ← log_div_log] at hx1
-      have hx2 : log x ≠ 0 := by simp; split_ands <;> by_contra! hx2 <;> simp [hx2] at hx hx0 <;> linarith
+      have hx2 : log x ≠ 0 := by simp; split_ands <;> by_contra! hx2 <;> simp [hx2] at hx hx0 ; linarith
       field_simp [hx2] at hx1
       simp at hx1
       have hx1 : (log x - log 3) * (log x + log 3) = 0 := by nlinarith

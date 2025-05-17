@@ -14,7 +14,7 @@ theorem algebra_97007 {f g h i : ℝ → ℝ}
   suffices {(x, y) | 0 < x ∧ ((f x = y ∧ g x = y ∧ x ≠ 1) ∨ (f x = y ∧ h x = y) ∨ (f x = y ∧ i x = y ∧ x ≠ 1) ∨ (g x = y ∧ h x = y ∧ x ≠ 1) ∨ (g x = y ∧ i x = y ∧ x ≠ 1) ∨ (h x = y ∧ i x = y ∧ x ≠ 1))} = {(3, 1), (1/3, -1), (3, -1), (1/3, 1), (1,0)} by
     rw [this, show 5 = 4 + 1 by rfl];
     rw [Set.ncard_insert_of_not_mem, Set.ncard_insert_of_not_mem, Set.ncard_insert_of_not_mem, Set.ncard_insert_of_not_mem, Set.ncard_singleton]
-    all_goals simp <;> try intro <;> split_ands
+    all_goals simp <;> try intro
     all_goals norm_num
   -- Let (x, y) be in ℝ
   ext ⟨x, y⟩
@@ -26,7 +26,7 @@ theorem algebra_97007 {f g h i : ℝ → ℝ}
     · have hx1 : f x = g x := by linarith
       simp [hf, hg] at hx1
       rw [← log_div_log, ← log_div_log] at hx1
-      have hx2 : log x ≠ 0 := by simp; split_ands <;> by_contra! hx2 <;> simp [hx2] at hx hx0 <;> linarith
+      have hx2 : log x ≠ 0 := by simp; split_ands <;> by_contra! hx2 <;> simp [hx2] at hx hx0 ; linarith
       field_simp [hx2] at hx1
       -- It follows that $(log x - log 3)(log x + log 3) = $
       have hx1 : (log x - log 3) * (log x + log 3) = 0 := by linarith
@@ -67,7 +67,7 @@ theorem algebra_97007 {f g h i : ℝ → ℝ}
     · have hx1 : f x = i x := by linarith
       simp [hf, hi] at hx1
       rw [← log_div_log, ← log_div_log] at hx1
-      have hx2 : log x ≠ 0 := by simp; split_ands <;> by_contra! hx2 <;> simp [hx2] at hx hx0 <;> linarith
+      have hx2 : log x ≠ 0 := by simp; split_ands <;> by_contra! hx2 <;> simp [hx2] at hx hx0 ; linarith
       field_simp [hx2] at hx1
       rw [← pow_two, ← pow_two] at hx1
       linarith [show (0 : ℝ) < 0 by calc
@@ -79,7 +79,7 @@ theorem algebra_97007 {f g h i : ℝ → ℝ}
     · have hx1 : g x = h x := by linarith
       simp [hg, hh] at hx1
       rw [← log_div_log, ← log_div_log] at hx1
-      have hx2 : log x ≠ 0 := by simp; split_ands <;> by_contra! hx2 <;> simp [hx2] at hx hx0 <;> linarith
+      have hx2 : log x ≠ 0 := by simp; split_ands <;> by_contra! hx2 <;> simp [hx2] at hx hx0 ; linarith
       field_simp [hx2] at hx1
       simp [← pow_two, one_div, log_inv] at hx1
       linarith [show (0 : ℝ) < 0 by calc
@@ -91,7 +91,7 @@ theorem algebra_97007 {f g h i : ℝ → ℝ}
     · have hx1 : g x = i x := by linarith
       simp [hg, hi] at hx1
       rw [← log_div_log] at hx1
-      have hx2 : log x ≠ 0 := by simp; split_ands <;> by_contra! hx2 <;> simp [hx2] at hx hx0 <;> linarith
+      have hx2 : log x ≠ 0 := by simp; split_ands <;> by_contra! hx2 <;> simp [hx2] at hx hx0 ; linarith
       field_simp [hx2] at hx1
       have hx1 : log 3 = 0 := by linarith
       simp at hx1

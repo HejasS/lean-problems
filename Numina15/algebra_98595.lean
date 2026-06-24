@@ -2,7 +2,7 @@ import Mathlib
 open Polynomial hiding C
 open Real Filter Topology LaurentPolynomial
 
-set_option maxHeartbeats 400000
+set_option maxHeartbeats 500000
 
 section algebra_98595
 noncomputable def Polynomial.eval₃ := Polynomial.eval₂ (@LaurentPolynomial.C ℝ _)
@@ -144,21 +144,28 @@ theorem algebra_98595 : { P : Polynomial ℝ |
       linear_combination (norm := ring_nf) (x + 1/x) * this
       field_simp; rw [← h₀]; ring
     -- Since this equation holds for all nonzero $x$, it holds as an equation of Laurent Polynomials
-    -- Indeed, for this we only need the equation to hold for infinitely many $x$, but this  well known fact
-    -- is not in Mathlib yet.
     have h₂ : (T 1 + T (-1)) * (P.eval₃ (T 1 + T (-1))) - (T 1 + T (-1)) * (P.eval₃ (T 1 - T (-1))) = T (-1) * P.eval₃ (T 1) + T 1 * P.eval₃ (T (-1)) := by
       apply eq_of_sub_eq_zero
+      -- Since a similar fact exists in Mathlib for polynomials, we
+      -- want to multiply by $T^n$ to get a polynomial
       obtain ⟨n, f, hf⟩  := exists_T_pow  ((T 1 + T (-1)) * (P.eval₃ (T 1 + T (-1))) - (T 1 + T (-1)) * (P.eval₃ (T 1 - T (-1))) - ( T (-1) * P.eval₃ (T 1) + T 1 * P.eval₃ (T (-1))))
       apply_fun (· * (T n))
       simp only [Int.reduceNeg, zero_mul]
       rw [← hf, toLaurent_eq_zero]
+      -- Then, it remains to show that there are infinitely many $x$ which give
+      -- $0$ when plugged in
       apply eq_of_infinite_eval_eq
       simp
+      -- We show that the interval $(0;1)$ gives $0$, which is enough since it is infinite
       suffices h₂₀ : Set.Ioo 0 1 ⊆ {x | f.eval (x : ℝ) = 0} by
         apply Set.Infinite.mono h₂₀
         simp [Set.Ioo_infinite]
       intro x hx
       rw [Set.mem_setOf_eq]
+      -- To show that for $x > 0$, we have $f(x) = 0$, we just need to put
+      -- together hf and h₁, however this is almost impossible to show in Mathlib at the
+      -- moment, as Laurent Polynomials don't support plugging in values yet.
+      -- Thus the fact that $f(x) = 0$ is left as a sorry
       sorry
       apply IsUnit.mul_left_injective
       apply isUnit_T
@@ -198,7 +205,8 @@ theorem algebra_98595 : { P : Polynomial ℝ |
       have h₃₂ (Q R : ℝ[T;T⁻¹]) : (Q + R) (n + 1) = Q (n + 1) + R (n + 1) := rfl
       have h₃₃ (Q R : ℝ[T;T⁻¹]) : (Q - R) (n + 1) = Q (n + 1) - R (n + 1) := rfl
       have h₃₄ (r : ℝ) (R : ℝ[T;T⁻¹]) : (r • R) (n + 1) = r * (R (n + 1)) := rfl
-      have h₃₅ (R : ℝ[T;T⁻¹]) (r : ℝ) : C r * R = r • R := by sorry
+      have h₃₅ (R : ℝ[T;T⁻¹]) (r : ℝ) : C r * R = r • R := by
+        rw [LaurentPolynomial.C_eq_algebraMap, Algebra.smul_def]
       have h₃₆ (r : ℕ) (R : ℝ[T;T⁻¹]) : ((↑r : ℝ[T;T⁻¹]) * R) (n + 1) = r * (R (n + 1)) := by
         induction' r with r ih
         · simp
@@ -214,7 +222,7 @@ theorem algebra_98595 : { P : Polynomial ℝ |
         · lift r to ℕ using hr
           norm_cast
           exact h₃₆ r R
-      have h₃₈ (n : ℕ): (-1 : ℝ[T;T⁻¹]) ^ n = (↑((-1 : ℤ) ^ n) : ℝ[T;T⁻¹]) := by sorry
+      have h₃₈ (n : ℕ): (-1 : ℝ[T;T⁻¹]) ^ n = (↑((-1 : ℤ) ^ n) : ℝ[T;T⁻¹]) := by norm_cast
       have h₃₉ (n : ℕ) : (n : ℝ[T;T⁻¹]) = C (n : ℝ) := rfl
       -- To calculate this, we expand the polynomial using the binomial theorem and pull everything inside the sums
       push_cast at h₃
